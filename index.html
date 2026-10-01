@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>État des lieux</title>
+<style>
+  :root{
+    --paper:#FAF8F2; --paper-dim:#F1EDE2; --ink:#1E2A3A; --ink-soft:#5B6472;
+    --line:#CFC9B8; --good:#5A7052; --bad:#A64A3E; --white:#FFFFFF;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper-dim);color:var(--ink);font-family:"Iowan Old Style","Georgia",serif;-webkit-font-smoothing:antialiased;font-size:14px;}
+  .sans{font-family:"Avenir Next","Helvetica Neue",Arial,sans-serif;}
+  header{background:var(--ink);color:var(--paper);padding:14px 16px;position:sticky;top:0;z-index:20;}
+  header h1{font-size:17px;margin:0;font-weight:600;}
+  header .sub{font-family:"Avenir Next","Helvetica Neue",Arial,sans-serif;font-size:11px;color:#B9C2CE;margin-top:2px;}
+  .ctrl-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+  select, .type-toggle{font-family:"Avenir Next","Helvetica Neue",Arial,sans-serif;font-size:12.5px;}
+  #bien-select{flex:1 1 220px;background:#2A374A;color:var(--paper);border:1px solid #445068;border-radius:6px;padding:7px 8px;}
+  .type-toggle{display:flex;border:1px solid #445068;border-radius:6px;overflow:hidden;}
+  .type-toggle button{background:transparent;border:none;color:#B9C2CE;padding:7px 12px;cursor:pointer;}
+  .type-toggle button.active{background:var(--paper);color:var(--ink);font-weight:600;}
+
+  main{max-width:900px;margin:0 auto;padding:16px 12px 110px;}
+  .doc-title{text-align:center;margin:6px 0 2px;}
+  .doc-title h2{font-size:16px;margin:0;letter-spacing:.5px;}
+  .doc-title .legal{font-family:"Avenir Next","Helvetica Neue",Arial,sans-serif;font-size:10px;color:var(--ink-soft);margin-top:2px;}
+
+  section{background:var(--white);border:1px solid var(--line);border-radius:4px;margin-bottom:12px;padding:10px 14px 14px;}
+  section > h3{font-size:13.5px;margin:0 0 8px;padding-bottom:6px;border-bottom:1px solid var(--paper-dim);font-family:"Avenir Next","Helvetica Neue",Arial,sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--ink);}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;}
+  .grid.g3{grid-template-columns:1fr 1fr 1fr;}
+  .f{margin-bottom:2px;}
+  label{display:block;font-family:"Avenir Next","Helvetica Neue",Arial,sans-serif;font-size:10.5px;color:var(--ink-soft);margin-bottom:2px;}
+  input[type=text],input[type=date],input[type=email],textarea{
+    width:100%;border:none;border-bottom:1px solid var(--line);padding:4px 2px;
+    font-family:"Avenir Next","Helvetica Neue",Arial,sans-serif;font-size:13px;color:var(--ink);background:transparent;
+  }
+  textarea{resize:vertical;min-height:28px;font-family:inherit;}
+  input:focus,textarea:focus{outline:none;border-bottom-color:var(--ink);}
+
+  .meter-block{border:1px solid var(--paper-dim);border-radius:4px;padding:8px 10px;margin-bottom:8px;}
+  .meter-block .name{font-family:"Avenir Next","Helvetica Neue",Arial,sans-serif;font-weight:700;font-size:11.5px;margin-bottom:6px;color:var(--ink);}
+
+  table.piece-table{width:100%;border-collapse:collapse;margin-bottom:6px;font-size:12px;}
+  table.piece-table caption{text-align:left;font-family:"Avenir Next","Helvetica Neue",Arial,sans-serif;font-weight:700;font-size:12.5px;padding:4px 0 6px;}
+  table.piece-table th{
+    font-family:"Avenir Next","Helvetica Neue",Arial,sans-serif;font-size:9.5px;font-weight:600;color:var(--ink-soft);
+    text-align:center;padding:4px 2px;border-bottom:1px solid var(--line);white-space:nowrap;
+  }
+  table.piece-table th.elem-col, table.piece-table th.comment-col{text-align:left;}
+  table.piece-table td{border-bottom:1px solid var(--paper-dim);padding:4px 3px;vertical-align:top;}
+  table.piece-table td.elem-cell{width:17%;}
+  table.piece-table td.state-cell{text-align:center;width:8%;}
+  table.piece-table td.comment-cell{width:auto;}
+  table.piece-table td.del-cell{width:16px;text-align:center;}
+  .elem-name{font-size:12px;line-height:1.25;}
+  .entree-ref{display:block;font-family:"Avenir Next","Helvetica Neue",Arial,sans-serif;font-size:9.5px;color:var(--ink-soft);font-style:italic;margin-top:1px;}
+  input[type=radio]{width:15px;height:15px;accent-color:var(--ink);}
+  .comment-cell textarea{min-height:22px;font-size:11.5px;}
+  .item-del{color:#B0655A;font-size:14px;cursor:pointer;}
+  .add-row{display:flex;gap:6px;margin-top:4px;}
+  .add-row input{flex:1;font-size:12px;border:1px dashed var(--line);padding:5px 6px;}
+  .add-row button{background:var(--ink);color:var(--paper);border:none;border-radius:4px;padding:0 10px;font-family:"Avenir Next","Helvetica Neue",Arial,sans-serif;font-size:11.5px;cursor:pointer;}
+  .inventaire-wrap{margin-top:4px;}
+  .inventaire-wrap label{font-style:italic;}
+  .inventaire-print{display:none;}
+
+  .sig-block{margin-top:10px;}
+  .sig-block label{font-style:normal;}
+  .sig-box{border:1px solid var(--line);border-radius:4px;margin-top:4px;position:relative;}
+  .sig-box canvas{display:block;width:100%;height:110px;touch-action:none;}
+  .sig-clear{position:absolute;top:4px;right:6px;font-family:"Avenir Next","Helvetica Neue",Arial,sans-serif;font-size:10.5px;color:var(--ink-soft);background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:2px 8px;cursor:pointer;}
+  .sig-hint{font-family:"Avenir Next","Helvetica Neue",Arial,sans-serif;font-size:9.5px;color:var(--ink-soft);margin-top:3px;font-style:italic;}
+
+  .conditions{font-family:"Avenir Next","Helvetica Neue",Arial,sans-serif;font-size:10.5px;line-height:1.55;color:var(--ink-soft);}
+  .conditions p{margin:0 0 8px;}
+
+  table.diff-table{width:100%;border-collapse:collapse;font-size:12px;}
+  table.diff-table th{font-family:"Avenir Next","Helvetica Neue",Arial,sans-serif;font-size:10px;color:var(--ink-soft);text-align:left;padding:4px 6px;border-bottom:1px solid var(--line);}
+  table.diff-table td{padding:5px 6px;border-bottom:1px solid var(--paper-dim);vertical-align:top;}
+  .diff-room{font-family:"Avenir Next","Helvetica Neue",Arial,sans-serif;font-size:10px;color:var(--ink-soft);}
+  .diff-badge{display:inline-block;padding:1px 7px;border-radius:10px;font-family:"Avenir Next","Helvetica Neue",Arial,sans-serif;font-size:10.5px;font-weight:600;color:#fff;}
+  .diff-badge.worse{background:var(--bad);}
+  .diff-badge.better{background:var(--good);}
+  .diff-badge.note{background:#8A8552;}
+  .diff-empty{font-family:"Avenir Next","Helvetica Neue",Arial,sans-serif;font-size:12px;color:var(--ink-soft);font-style:italic;}
+
+  footer{position:fixed;bottom:0;left:0;right:0;background:var(--paper);border-top:1px solid var(--line);padding:8px 14px;display:flex;gap:8px;justify-content:center;z-index:20;font-family:"Avenir Next","Helvetica Neue",Arial,sans-serif;}
+  footer button{flex:1;max-width:220px;padding:11px 8px;border-radius:6px;border:1px solid var(--line);font-size:12.5px;cursor:pointer;font-weight:600;}
+  #btn-save{background:var(--ink);color:var(--paper);border:none;}
+  #btn-print{background:var(--paper-dim);color:var(--ink);}
+  #btn-load{background:transparent;color:var(--ink-soft);}
+  #btn-mail{background:#5A7052;color:#fff;border:none;}
+
+  .toast{position:fixed;bottom:64px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:7px 15px;border-radius:20px;font-family:"Avenir Next","Helvetica Neue",Arial,sans-serif;font-size:12px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:30;}
+  .toast.show{opacity:1;}
+
+  @media print{
+    header,footer,.item-del,.add-row{display:none !important;}
+    body{background:#fff;font-size:10.5px;}
+    section{border:none;box-shadow:none;padding:2px 0;margin-bottom:6px;break-inside:avoid;}
+    main{padding:0;max-width:100%;}
+    table.piece-table{break-inside:avoid;}
+    input,textarea{border:none;border-bottom:1px solid #999;}
+    .doc-title h2{font-size:14px;}
+    .inventaire-wrap textarea{display:none;}
+    .inventaire-print{display:block !important;column-count:2;column-gap:18px;font-family:"Avenir Next","Helvetica Neue",Arial,sans-serif;font-size:9.5px;line-height:1.5;}
+    .inventaire-print div{break-inside:avoid;}
+    .sig-box{height:130px;}
+    .sig-box canvas{height:130px;}
+    .sig-clear{display:none !important;}
+    .sig-hint{display:none;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1 id="doc-h1">État des lieux — Studio</h1>
+  <div class="sub">Location Appartements Verge Toulouze</div>
+  <div class="ctrl-row">
+    <select id="bien-select"></select>
+    <div class="type-toggle">
+      <button id="type-entree" class="active">Entrée</button>
+      <button id="type-sortie">Sortie</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="doc-title">
+    <h2>ÉTAT DES LIEUX <span id="type-label">D'ENTRÉE</span></h2>
+    <div class="legal">LOI ALLUR 2016 — DÉCRET N° 2016-382 DU 30 MARS 2016</div>
+  </div>
+
+  <section id="sec-info">
+    <h3>Informations générales</h3>
+    <div class="grid">
+      <div class="f"><label>Bailleur (nom)</label><input type="text" id="f-bailleur"></div>
+      <div class="f"><label>Adresse du bailleur</label><input type="text" id="f-bailleur-adresse"></div>
+      <div class="f"><label>Locataire (nom)</label><input type="text" id="f-locataire"></div>
+      <div class="f"><label>Email locataire</label><input type="email" id="f-locataire-email"></div>
+      <div class="f"><label>Adresse du logement</label><input type="text" id="f-adresse"></div>
+      <div class="f"><label>Date de l'état des lieux</label><input type="date" id="f-date"></div>
+      <div class="f"><label>Nombre de pièces</label><input type="text" id="f-pieces"></div>
+      <div class="f"><label>Surface habitable</label><input type="text" id="f-surface"></div>
+    </div>
+  </section>
+
+  <section id="sec-compteurs">
+    <h3>1. Relevés des compteurs</h3>
+    <div id="compteurs-list"></div>
+  </section>
+
+  <section id="sec-chauffage">
+    <h3>2. État des éléments de chauffage</h3>
+    <div id="chauffage-list"></div>
+  </section>
+
+  <section id="sec-cles">
+    <h3>3. Remise des clés / code</h3>
+    <div class="grid g3" id="cles-list"></div>
+  </section>
+
+  <section id="sec-pieces">
+    <h3>4. État des lieux pièce par pièce</h3>
+    <div id="rooms"></div>
+  </section>
+
+  <section id="sec-diff" style="display:none;">
+    <h3>Comparatif état d'entrée / état de sortie <span class="sans" id="diff-refresh" style="float:right;text-transform:none;font-weight:600;font-size:11px;cursor:pointer;text-decoration:underline;">Actualiser</span></h3>
+    <div id="diff-summary" class="sans" style="font-size:12px;color:var(--ink-soft);margin-bottom:8px;"></div>
+    <div id="diff-content"></div>
+  </section>
+
+  <section id="sec-conditions">
+    <h3>Conditions générales</h3>
+    <div class="conditions">
+      <p>Conformément à l'article 3 de la loi n° 89-462 du 6 juillet 1989, un état des lieux doit être établi contradictoirement entre les parties lors de la remise des clefs au locataire, et lors de la restitution de celles-ci. Le locataire dispose d'un délai de 10 jours pour demander au bailleur ou à son représentant de compléter le présent état des lieux (pour l'état des équipements de chauffe, le délai est porté au 1er mois de la période de chauffe).</p>
+      <p>Les cosignataires reconnaissent avoir reçu chacun un exemplaire du présent état des lieux et s'accordent pour y faire référence lors du départ du locataire. Cet état des lieux est transmis soit par e-mail au format PDF, soit par courrier si les cosignataires en font la demande.</p>
+      <p>Le locataire sortant ou son représentant est informé que les dégradations ou défauts d'entretien constatés sur le présent état des lieux peuvent relever de son éventuelle responsabilité après comparaison avec l'état des lieux d'entrée. Il reconnaît que des indemnités correspondant à des dégradations ou défauts d'entretien seront imputées sur son dépôt de garantie.</p>
+      <p>Le présent état des lieux, établi contradictoirement entre les parties qui le reconnaissent exact, fait partie intégrante du contrat de location dont il ne peut être dissocié.</p>
+    </div>
+    <div class="grid" style="margin-top:12px;">
+      <div class="sig-block">
+        <label>Bailleur : <span id="sig-bailleur-name" class="sans"></span></label>
+        <div class="sig-box">
+          <span class="sig-clear" data-clear="sig-bailleur">Effacer</span>
+          <canvas id="sig-bailleur"></canvas>
+        </div>
+        <div class="sig-hint">Écrire à la main « Certifié exact » puis signer, au doigt ou au stylet</div>
+      </div>
+      <div class="sig-block">
+        <label>Locataire : <span id="sig-locataire-name" class="sans"></span></label>
+        <div class="sig-box">
+          <span class="sig-clear" data-clear="sig-locataire">Effacer</span>
+          <canvas id="sig-locataire"></canvas>
+        </div>
+        <div class="sig-hint">Écrire à la main « Certifié exact » puis signer, au doigt ou au stylet</div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<footer>
+  <button id="btn-save">Enregistrer</button>
+  <button id="btn-load">Charger JSON</button>
+  <button id="btn-print">PDF / Imprimer</button>
+  <button id="btn-mail">Brouillon email</button>
+</footer>
+<input type="file" id="file-input" accept="application/json" style="display:none">
+
+<script>
+const ST = [
+  {v:"tres_bon", l:"Très bon état"},
+  {v:"bon", l:"Bon état"},
+  {v:"moyen", l:"Etat moyen"},
+  {v:"mauvais", l:"Mauvais état"}
+];
+
+const BIENS = {
+  "30_landrin": {
+    label: "Studio — 30 rue Emile Landrin, Boulogne-Billancourt",
+    bailleur: "Mme Stéphanie TOULOUZE",
+    bailleurAdresse: "44 rue Avaulée, 92240 Malakoff",
+    adresse: "30 rue Emile Landrin, 2ème étage droite, 92100 Boulogne-Billancourt",
+    pieces: "1", surface: "17 m²",
+    compteurs: [
+      {nom:"Eau froide", localisation:"Cuisine"},
+      {nom:"Électricité", numero:"214 353 110 757 16", localisation:"Meuble entrée salon", hpHc:true}
+    ],
+    chauffage: [
+      {nom:"Radiateur", desc:"1 radiateur à inertie / bloc fonte FONTEA Smart ECOcontrol Bas 1500 W", etat:"tres_bon"},
+      {nom:"Ballon eau chaude", desc:"Ballon eau chaude individuel 45 litres — localisation : salle de bain", etat:"tres_bon"}
+    ],
+    cles: {"Clé(s) appartement":"1","Boîte aux lettres":"1","Entrée immeuble":"Code B6032","Box / parking":"Pas de parking","Cave":"Pas de cave","Local poubelle":"Pas de clé (sous l'escalier immeuble)"},
+    rooms: [
+      {key:"sejour", title:"Séjour", inventaireDefaut:"1 chaise bois en tissu noire marque Potiron\n1 tabouret de bar métal blanc Glenn ikea\n1 tapis à motif gris et blanc Maison du Monde\n1 clic clac noir sommier à lattes\n1 matelas Someo mousse haute résilience (35 kg/m³)\n1 protège-matelas\n1 housse gris anthracite foncé\n1 aspirateur cyclonique Silvercrest « SHAZ 22.2 E6 » Batterie Zyklon et accessoires\n1 déshumidificateur Tectro TD1010", items:[
+        {n:"Murs"},{n:"Sols"},{n:"Plinthes"},{n:"Plafond"},{n:"Portes, menuiserie"},
+        {n:"Fenêtre", d:"Fenêtre double vitrage en très bon état avec ventilation"},
+        {n:"Bibliothèque"},
+        {n:"Buffet", d:"1 buffet 2 portes avec prise multiple intégrée USB, 1 lampe"},
+        {n:"Meuble(s)", d:"1 canapé clic-clac 130x190 housse gris anthracite, 1 matelas SOMEO + protège-matelas"},
+        {n:"Table", d:"1 petite table de séjour carrée en métal, noire"},
+        {n:"Dressing", d:"8 cintres bois, 5 cintres métal plastifié, 1 miroir vertical"},
+        {n:"Électricité (lumière, prises)", d:"1 suspension Brunsta ikea, 8 prises, 1 prise téléphone, 1 multi-prise (4+2 USB)"},
+        {n:"Chauffage, tuyauterie", d:"1 radiateur électrique à fonte active Airelec Fontea 1500W réf. A693075"},
+        {n:"Ventilation"}
+      ]},
+      {key:"cuisine", title:"Cuisine", inventaireDefaut:"6 assiettes plates bleu/gris réf. dinera ikea\n5 assiettes creuses bleu/gris réf. dinera ikea\n4 assiettes à dessert bleu/gris réf. dinera ikea\n4 bols réf. dinera ikea\n8 bols divers\n5 mugs\n2 tasses à café avec soucoupes\n2 verres à vin\n6 verres à eau haut\n4 verres à eau type verres basques\n6 fourchettes réf. Fornuft ikea\n6 couteaux réf. Fornuft ikea\n6 cuillères à soupe réf. Fornuft ikea\n6 cuillères à dessert réf. Fornuft ikea\n1 économe\n2 couteaux de cuisine réf. Vorda ikea\n1 décapsuleur\n2 spatules\n1 boule à thé\n1 paire de ciseaux\n1 porte couvert cylindrique + égouttoir rond\n1 porte éponge\n2 maniques\n2 dessous de plats\n1 pompe à savon blanche porcelaine\n1 cafetière italienne\n1 range ustensiles blanc\n1 saladier rond en métal\n1 saladier rond blanc porcelaine\n2 plats à four rectangulaire (1 carré et 1 rectangulaire dont 1 avec couvercle plastique)\n1 boîte en verre avec couvercle\n1 essoreuse à salade\n1 écumoire en plastique transparent\n1 couvercle pour plats micro-ondes\n1 plateau motif oiseaux\n1 planche à découper\n2 casseroles TEFAL Ingenio avec manche amovible neuves\n2 poêles TEFAL Ingenio neuves\n2 séparateurs de casseroles\n2 torchons + 1 torchon à main vert\n1 poubelle à couvercle\n1 balayette avec 1 pelle\n1 balais\n1 étendoir à linge pliable marque Leifheit\n1 fer à repasser\n1 petite table à repasser", items:[
+        {n:"Murs"},{n:"Sols"},{n:"Plafond"},{n:"Portes, menuiserie"},
+        {n:"Plan de travail 1 (côté évier)"},{n:"Plan de travail 2 (côté fenêtre)"},
+        {n:"Fenêtres (vitres, volets)", d:"1 fenêtre double vitrage, 2 stores gris occultants"},
+        {n:"Rangement, placard", d:"2 placards haut, 1 meuble bas, 1 casier bouteilles"},
+        {n:"Électricité (lumière, prises)", d:"3 prises"},
+        {n:"Chauffage, tuyauterie"},{n:"Ventilation", d:"1 ventilation"},
+        {n:"Évier", d:"1 grand bac inox"},
+        {n:"Siphon, évacuation", d:"Siphon et évacuation"},
+        {n:"Joints"},
+        {n:"Plaques de cuisson", d:"1 plaque vitrocéramique 2 feux Rosières réf. RDH32"},
+        {n:"Lave-linge", d:"1 lave-linge Indesit réf. IWC 5125 FR"},
+        {n:"Réfrigérateur", d:"1 réfrigérateur Candy réf. CCTOS 542WH"},
+        {n:"Micro-ondes", d:"1 four micro-ondes gril ESSENTIELB EG203S CARBONE"}
+      ]},
+      {key:"sdb", title:"Salle de bains", inventaireDefaut:"1 grand miroir carré\n1 petite poubelle métal grise\n1 porte savon noir en grès\n1 porte brosse à dent noir en grès\n1 tapis gris de SdB\n1 balais à toilette\n2 panières de rangement pour meuble de SdB grise\n1 petite panière à linge\n1 porte serviette\n1 support papier toilette\n1 raclette à douche", items:[
+        {n:"Murs"},{n:"Sols", d:"Carrelage gris anthracite"},{n:"Plinthes"},{n:"Plafond"},
+        {n:"Portes, menuiserie", d:"Porte avec poignée"},
+        {n:"Rangement, placard", d:"1 placard ouvert/casiers, meuble Lapeyre 2 tiroirs sous vasque"},
+        {n:"Électricité (lumière, prises)", d:"1 prise"},
+        {n:"Chauffage, chauffe-eau", d:"1 chauffe-eau plat Ariston Velis Evo Plus"},
+        {n:"Ventilation", d:"1 ventilation au-dessus douche"},
+        {n:"Lavabo", d:"1 lavabo Lapeyre"},
+        {n:"Douche", d:"Douche équipée Hansgrohe"},
+        {n:"WC / cuvette", d:"1 WC suspendu"},
+        {n:"Mécanisme chasse d'eau"},{n:"Joints"}
+      ]},
+      {key:"autres", title:"Autres accessoires", items:[{n:"Sonnerie"},{n:"Boîte aux lettres"}]}
+    ]
+  },
+  "122_gabriel_peri": {
+    label: "Studio — 122 bv Gabriel Péri, Malakoff",
+    bailleur: "Mme Stéphanie TOULOUZE et M. Matthieu VERGE",
+    bailleurAdresse: "44 rue Avaulée, 92240 Malakoff",
+    adresse: "122 bv Gabriel Péri, Bât C, 4ème étage droite, 92240 Malakoff",
+    pieces: "1", surface: "17 m²",
+    compteurs: [
+      {nom:"Eau froide", localisation:"Extérieur, à gauche de la porte d'entrée"},
+      {nom:"Électricité", numero:"213 668 595 423 63 (PRM)", localisation:"Meuble au-dessus du bar", hpHc:true}
+    ],
+    chauffage: [
+      {nom:"Radiateur", desc:"1 radiateur à inertie / pierre réfractaire SIBAYAK SAUTER 1500 W", etat:"tres_bon"},
+      {nom:"Ballon eau chaude", desc:"Ballon eau chaude ARISTON VELIS EVO — localisation : salle de bain", etat:"tres_bon"}
+    ],
+    cles: {"Clé(s) studio":"1 (1 serrure porte d'entrée)","Boîte aux lettres":"1 clé","Cave":"1 clé sous-sol + 1 clé cave (1ère porte à droite bas escalier)","Entrée immeuble":"Code B1956","Box / parking":"Pas de parking","Local poubelle":"Pas de clé (cour principale, box à gauche)"},
+    rooms: [
+      {key:"sejour_cuisine", title:"Séjour / Cuisine (commun)", items:[
+        {n:"Murs"},{n:"Sols"},{n:"Plinthes"},{n:"Plafond"},{n:"Portes, menuiserie"},
+        {n:"Fenêtre côté séjour", d:"1 fenêtre double vitrage avec 2 stores occultants + volets"},
+        {n:"Fenêtre côté cuisine", d:"1 fenêtre double vitrage avec store occultant"},
+        {n:"Électricité (lumière, prises)", d:"2 suspensions, 2 spots sous meubles haut, 1 prise téléphone, 1 multi-prises (x3), 1 lampe"},
+        {n:"Chauffage, tuyauterie", d:"1 radiateur à inertie / pierre réfractaire SIBAYAK SAUTER 1500 W"},
+        {n:"Ventilation", d:"1 ventilation VMC"}
+      ]},
+      {key:"cote_sejour", title:"Côté séjour", inventaireDefaut:"2 tabourets hauts velours rose clair et vert clair SKUM\n1 tapis rayures vert Maison du Monde\n1 clic clac noir sommier à lattes avec 4 coussins (2 coussins noirs et 2 coussins en tissu vert à motif)\n1 housse de clic clac grise anthracite\n1 couette 2 places\n2 protège-matelas\n1 oreiller 60 x 60 cm\n1 petite télévision couleur marque Samsung\n1 antenne TNT mobile\n1 aspirateur Moulinex City Space (sacs)\n1 étendoir à linge\nAccès fibre avec câble et boîtier optique\n1 déshumidificateur", items:[
+        {n:"Bibliothèque"},
+        {n:"Buffet", d:"1 buffet double porte, 1 buffet 2 portes et 1 porte dressing"},
+        {n:"Meuble(s)", d:"1 canapé clic-clac 130x190 housse grise + 4 coussins, 1 matelas"},
+        {n:"Table", d:"3 tables gigognes couleur bois clair"}
+      ]},
+      {key:"cote_cuisine", title:"Côté cuisine", inventaireDefaut:"1 verre doseur + 1 tournis métallique\n5 assiettes plates vert gris réf. ikea\n6 assiettes creuses vert gris réf. ikea\n6 assiettes à dessert vert gris réf. ikea\n2 bols\n6 tasses à café\n3 mugs (2 Disney)\n5 verres à eau type verres basques\n6 fourchettes réf. ikea\n6 couteaux réf. ikea\n6 cuillères à soupe réf. ikea\n6 cuillères à dessert réf. ikea\n1 économe\n1 couteau à viande\n1 décapsuleur\n5 spatules\n1 fouet\n2 paires de ciseaux\n1 porte couvert cylindrique + égouttoir rond\n1 porte éponge\n2 maniques silicone\n2 maniques en tissu\n1 range ustensiles cylindrique\n1 range couverts blanc\n1 boîte de rangement blanche\n1 boîte à thé métal vert eau\n1 boîte ronde à gâteau blanche avec couvercle\n2 bouteilles à eau en verre\n6 dessous de verres\n3 petits bols sur plateau en céramique\n2 plats à four rectangulaire en verre avec couvercle plastique\n1 essoreuse à salade\n1 écumoire en plastique\n1 couvercle pour plats micro-ondes\n1 grill en métal pour micro-onde\n1 planche à découper\n4 poêles en bon état\n3 couvercles en verre\n2 casseroles (1 petite et 1 moyenne)\n1 poignée clipsable\n3 torchons\n1 serviette à main\n2 serviettes de table\n2 sets de table\n1 seau avec essoreuse / 1 ventouse\n1 manche télescopique avec serpillère\n1 poubelle à couvercle\n1 balayette avec 1 pelle\n1 raclette à plaques\n1 rouleau à pâtisserie", items:[
+        {n:"Plan de travail 1 (côté évier)"},{n:"Plan de travail 2 (côté fenêtre)"},
+        {n:"Rangement, placard", d:"3 placards haut, 2 meubles bas, 1 bar, 3 étagères"},
+        {n:"Table bar cuisine"},
+        {n:"Évier", d:"1 grand bac inox"},
+        {n:"Siphon, évacuation", d:"Siphon et évacuation"},
+        {n:"Joints"},
+        {n:"Plaques de cuisson", d:"1 plaque vitrocéramique 2 feux Rosières réf. RDH32"},
+        {n:"Lave-linge", d:"1 lave-linge Samsung réf. WW70J3483KW"},
+        {n:"Réfrigérateur", d:"1 réfrigérateur Moulinex Studio réf. MSTTR105WHA++"},
+        {n:"Micro-ondes", d:"1 four micro-ondes gril Samsung MG23K3515AK noir"},
+        {n:"Four", d:"1 four Silvercrest"}
+      ]},
+      {key:"sdb", title:"Salle de bains", inventaireDefaut:"1 grand miroir carré\n1 petite poubelle métal noire\n1 verre à dent noir\n1 pompe à savon noire\n1 balais à toilette noir\n1 porte serviettes sur porte\n1 petit chauffage d'appoint soufflant", items:[
+        {n:"Murs"},{n:"Sols", d:"Carrelage type carreaux de ciment"},{n:"Plinthes"},{n:"Plafond"},{n:"Portes, menuiserie"},
+        {n:"Rangement, placard", d:"1 meuble sous vasque, 2 étagères noires aluminium"},
+        {n:"Électricité (lumière, prises)", d:"1 prise, spots plafond"},
+        {n:"Chauffage, chauffe-eau", d:"1 chauffe-eau plat Ariston Velis Evo Plus"},
+        {n:"Ventilation", d:"1 VMC"},
+        {n:"Lavabo", d:"1 lavabo avec robinet Grohe"},
+        {n:"Douche", d:"Douche neuve équipée Hansgrohe avec support"},
+        {n:"WC / cuvette", d:"1 WC avec abattant blanc"},
+        {n:"Mécanisme chasse d'eau"},{n:"Joints"}
+      ]},
+      {key:"autres", title:"Autres accessoires", items:[{n:"Sonnerie"},{n:"Boîte aux lettres"}]}
+    ]
+  }
+};
+
+let currentBien = "30_landrin";
+let docType = "entree";
+let entreeRef = null; // données de l'état d'entrée chargées, pour référence en mode sortie
+
+const bienSelect = document.getElementById("bien-select");
+Object.keys(BIENS).forEach(k=>{
+  const o = document.createElement("option"); o.value=k; o.textContent=BIENS[k].label;
+  bienSelect.appendChild(o);
+});
+bienSelect.addEventListener("change", ()=>{ currentBien = bienSelect.value; loadTemplate(); });
+
+document.getElementById("type-entree").addEventListener("click", ()=>switchType("entree"));
+document.getElementById("type-sortie").addEventListener("click", ()=>switchType("sortie"));
+
+function switchType(t){
+  docType = t;
+  document.getElementById("type-entree").classList.toggle("active", t==="entree");
+  document.getElementById("type-sortie").classList.toggle("active", t==="sortie");
+  document.getElementById("type-label").textContent = t==="entree" ? "D'ENTRÉE" : "DE SORTIE";
+  document.title = (t==="entree" ? "État des lieux d'entrée — " : "État des lieux de sortie — ") + BIENS[currentBien].label;
+  if(t==="sortie"){
+    const saved = localStorage.getItem("edl_entree_"+currentBien);
+    if(saved){
+      entreeRef = JSON.parse(saved);
+      loadData(entreeRef, true);
+      toast("État d'entrée chargé — ajuste si besoin");
+      renderDiff();
+    } else {
+      entreeRef = null;
+      loadTemplate();
+      toast("Aucun état d'entrée enregistré pour ce bien — charge le JSON correspondant");
+      renderDiff();
+    }
+  } else {
+    entreeRef = null;
+    loadTemplate();
+    renderDiff();
+  }
+}
+
+function fVal(id,v){ document.getElementById(id).value = v||""; }
+
+// Aligne les dates de relevé des compteurs (eau, électricité) sur la "Date de
+// l'état des lieux" saisie en premier dans Informations générales.
+function syncCompteurDates(){
+  const v = document.getElementById("f-date").value;
+  document.querySelectorAll("#compteurs-list [data-mf='date']").forEach(i=> i.value = v);
+}
+document.getElementById("f-date").addEventListener("input", syncCompteurDates);
+document.getElementById("f-date").addEventListener("change", syncCompteurDates);
+
+// Affiche le nom du bailleur / locataire juste au-dessus de sa zone de
+// signature, à jour en temps réel pendant la saisie.
+function syncSigNames(){
+  const nb = document.getElementById("sig-bailleur-name");
+  const nl = document.getElementById("sig-locataire-name");
+  if(nb) nb.textContent = document.getElementById("f-bailleur").value || "";
+  if(nl) nl.textContent = document.getElementById("f-locataire").value || "";
+}
+document.getElementById("f-bailleur").addEventListener("input", syncSigNames);
+document.getElementById("f-locataire").addEventListener("input", syncSigNames);
+
+function loadTemplate(){
+  const b = BIENS[currentBien];
+  document.getElementById("doc-h1").textContent = b.label;
+  document.title = (docType==="entree" ? "État des lieux d'entrée — " : "État des lieux de sortie — ") + b.label;
+  fVal("f-bailleur", b.bailleur);
+  fVal("f-bailleur-adresse", b.bailleurAdresse);
+  fVal("f-locataire","");
+  fVal("f-locataire-email","");
+  fVal("f-adresse", b.adresse);
+  fVal("f-date","");
+  fVal("f-pieces", b.pieces);
+  fVal("f-surface", b.surface);
+  renderCompteurs(b.compteurs);
+  renderChauffage(b.chauffage);
+  renderCles(b.cles);
+  renderRooms(b.rooms);
+  syncCompteurDates();
+  syncSigNames();
+}
+
+function renderCompteurs(list){
+  const el = document.getElementById("compteurs-list"); el.innerHTML="";
+  list.forEach((c,i)=>{
+    const div = document.createElement("div"); div.className="meter-block"; div.dataset.idx=i;
+    const releveFields = c.hpHc
+      ? `<div class="f"><label>Heures pleines (HP)</label><input type="text" data-mf="hp"></div>
+         <div class="f"><label>Heures creuses (HC)</label><input type="text" data-mf="hc"></div>`
+      : `<div class="f"><label>Relevé (chiffres noirs)</label><input type="text" data-mf="releve"></div>`;
+    div.innerHTML = `<div class="name">${c.nom}</div>
+      <div class="grid g3">
+        <div class="f"><label>Date du relevé</label><input type="date" data-mf="date"></div>
+        ${releveFields}
+        <div class="f"><label>Localisation</label><input type="text" data-mf="localisation" value="${c.localisation||""}"></div>
+      </div>
+      ${c.numero?`<div class="f"><label>Numéro de compteur</label><input type="text" data-mf="numero" value="${c.numero}"></div>`:""}`;
+    el.appendChild(div);
+  });
+}
+
+function renderChauffage(list){
+  const el = document.getElementById("chauffage-list"); el.innerHTML="";
+  list.forEach((c,i)=>{
+    const div = document.createElement("div"); div.className="meter-block"; div.dataset.idx=i;
+    const states = ST.map(s=>`<label class="sans" style="display:inline-flex;align-items:center;gap:3px;font-size:11px;margin-right:10px;">
+        <input type="radio" name="chauf_${i}" data-cf="etat" value="${s.v}" ${c.etat===s.v?"checked":""}> ${s.l}</label>`).join("");
+    div.innerHTML = `<div class="name">${c.nom}</div>
+      <div class="f"><label>Description</label><textarea data-cf="desc">${c.desc||""}</textarea></div>
+      <div style="margin-top:4px;">${states}</div>`;
+    el.appendChild(div);
+  });
+}
+
+function renderCles(obj){
+  const el = document.getElementById("cles-list"); el.innerHTML="";
+  Object.keys(obj).forEach(k=>{
+    const div = document.createElement("div"); div.className="f";
+    div.innerHTML = `<label>${k}</label><input type="text" data-cles="${k}" value="${obj[k]}">`;
+    el.appendChild(div);
+  });
+}
+
+let uid=0;
+function renderRooms(rooms){
+  uid=0;
+  const el = document.getElementById("rooms"); el.innerHTML="";
+  rooms.forEach(room=>{
+    const wrap = document.createElement("div"); wrap.dataset.roomKey = room.key;
+    const table = document.createElement("table"); table.className="piece-table";
+    table.innerHTML = `<caption>${room.title}</caption>
+      <thead><tr>
+        <th class="elem-col">Élément</th>
+        ${ST.map(s=>`<th>${s.l}</th>`).join("")}
+        <th class="comment-col">Commentaires</th><th></th>
+      </tr></thead><tbody></tbody>`;
+    const tbody = table.querySelector("tbody");
+    room.items.forEach(it=> tbody.appendChild(buildRow(room.key, it.n, it.d||"")));
+    wrap.appendChild(table);
+
+    const addRow = document.createElement("div"); addRow.className="add-row";
+    addRow.innerHTML = `<input type="text" class="sans new-item" placeholder="Ajouter un élément…"><button class="add-btn">Ajouter</button>`;
+    addRow.querySelector(".add-btn").addEventListener("click", ()=>{
+      const inp = addRow.querySelector(".new-item");
+      if(!inp.value.trim()) return;
+      tbody.appendChild(buildRow(room.key, inp.value.trim(), ""));
+      inp.value="";
+    });
+    wrap.appendChild(addRow);
+
+    if(room.inventaireDefaut!==undefined || true){
+      const invWrap = document.createElement("div"); invWrap.className="inventaire-wrap f";
+      invWrap.innerHTML = `<label>Inventaire / mobilier</label><textarea class="inventaire" rows="4">${room.inventaireDefaut||""}</textarea><div class="inventaire-print"></div>`;
+      wrap.appendChild(invWrap);
+    }
+    el.appendChild(wrap);
+  });
+}
+
+function syncInventoryPrintViews(){
+  document.querySelectorAll(".inventaire-wrap").forEach(w=>{
+    const ta = w.querySelector(".inventaire");
+    const pv = w.querySelector(".inventaire-print");
+    if(!ta || !pv) return;
+    pv.innerHTML = ta.value.split("\n").filter(l=>l.trim()!=="").map(l=>`<div>• ${l}</div>`).join("");
+  });
+}
+window.addEventListener("beforeprint", ()=>{
+  syncInventoryPrintViews();
+  document.title = (docType==="entree" ? "État des lieux d'entrée — " : "État des lieux de sortie — ") + BIENS[currentBien].label;
+  renderDiff();
+});
+
+function buildRow(roomKey, name, desc, entreeEtat){
+  const id = roomKey+"_"+(uid++);
+  const tr = document.createElement("tr"); tr.dataset.itemId=id;
+  const refLine = entreeEtat ? `<span class="entree-ref">Entrée : ${ST.find(s=>s.v===entreeEtat)?.l||entreeEtat}</span>` : "";
+  tr.innerHTML = `
+    <td class="elem-cell"><div class="elem-name">${name}</div>${refLine}</td>
+    ${ST.map(s=>`<td class="state-cell"><input type="radio" name="st_${id}" value="${s.v}" ${entreeEtat===s.v?"checked":""}></td>`).join("")}
+    <td class="comment-cell"><textarea data-comment>${desc}</textarea></td>
+    <td class="del-cell"><span class="item-del">×</span></td>`;
+  tr.querySelector(".item-del").addEventListener("click", ()=> tr.remove());
+  return tr;
+}
+
+function collectData(){
+  const data = {
+    bien: currentBien, bien_label: BIENS[currentBien].label, type: docType,
+    generees_le: new Date().toISOString(),
+    info: {
+      bailleur: document.getElementById("f-bailleur").value,
+      bailleurAdresse: document.getElementById("f-bailleur-adresse").value,
+      locataire: document.getElementById("f-locataire").value,
+      locataireEmail: document.getElementById("f-locataire-email").value,
+      adresse: document.getElementById("f-adresse").value,
+      date: document.getElementById("f-date").value,
+      pieces: document.getElementById("f-pieces").value,
+      surface: document.getElementById("f-surface").value
+    },
+    compteurs: [...document.querySelectorAll("#compteurs-list .meter-block")].map(b=>{
+      const o={}; b.querySelectorAll("[data-mf]").forEach(i=>o[i.dataset.mf]=i.value); return o;
+    }),
+    chauffage: [...document.querySelectorAll("#chauffage-list .meter-block")].map(b=>{
+      const o={desc:b.querySelector("[data-cf='desc']").value};
+      const sel = b.querySelector("input[data-cf='etat']:checked");
+      o.etat = sel?sel.value:null; return o;
+    }),
+    cles: (()=>{ const o={}; document.querySelectorAll("#cles-list [data-cles]").forEach(i=>o[i.dataset.cles]=i.value); return o; })(),
+    pieces_data: {}
+  };
+  document.querySelectorAll("#rooms > div").forEach(wrap=>{
+    const key = wrap.dataset.roomKey;
+    const rows = [];
+    wrap.querySelectorAll("tbody tr").forEach(tr=>{
+      const name = tr.querySelector(".elem-name").textContent;
+      const sel = tr.querySelector("input[type=radio]:checked");
+      const comment = tr.querySelector("[data-comment]").value;
+      rows.push({item:name, etat: sel?sel.value:null, commentaire:comment});
+    });
+    const inv = wrap.querySelector(".inventaire");
+    data.pieces_data[key] = {items:rows, inventaire: inv?inv.value:""};
+  });
+  data.signatures = {
+    bailleur: sigB ? sigB.canvas.toDataURL() : null,
+    locataire: sigL ? sigL.canvas.toDataURL() : null
+  };
+  return data;
+}
+
+function loadData(data, asSortieRef){
+  if(!data) return;
+  if(data.bien && BIENS[data.bien]){ currentBien = data.bien; bienSelect.value = data.bien; }
+  document.getElementById("doc-h1").textContent = BIENS[currentBien].label;
+  fVal("f-bailleur", data.info?.bailleur);
+  fVal("f-bailleur-adresse", data.info?.bailleurAdresse);
+  fVal("f-locataire", data.info?.locataire);
+  fVal("f-locataire-email", data.info?.locataireEmail);
+  fVal("f-adresse", data.info?.adresse);
+  fVal("f-date", asSortieRef ? "" : data.info?.date);
+  fVal("f-pieces", data.info?.pieces);
+  fVal("f-surface", data.info?.surface);
+
+  renderCompteurs(BIENS[currentBien].compteurs.map((c,i)=>({...c, localisation:(data.compteurs&&data.compteurs[i]?.localisation)||c.localisation})));
+  (data.compteurs||[]).forEach((c,i)=>{
+    const b = document.querySelectorAll("#compteurs-list .meter-block")[i]; if(!b) return;
+    if(!asSortieRef){
+      ["date","releve","hp","hc"].forEach(f=>{
+        const el = b.querySelector(`[data-mf='${f}']`);
+        if(el) el.value = c[f]||"";
+      });
+    }
+  });
+
+  renderChauffage(BIENS[currentBien].chauffage.map((c,i)=>({...c, desc:(data.chauffage&&data.chauffage[i]?.desc)||c.desc, etat:(data.chauffage&&data.chauffage[i]?.etat)||c.etat})));
+
+  renderCles(Object.assign({}, BIENS[currentBien].cles, data.cles||{}));
+
+  const rooms = BIENS[currentBien].rooms;
+  uid=0;
+  const el = document.getElementById("rooms"); el.innerHTML="";
+  rooms.forEach(room=>{
+    const saved = (data.pieces_data && data.pieces_data[room.key]) || null;
+    const wrap = document.createElement("div"); wrap.dataset.roomKey = room.key;
+    const table = document.createElement("table"); table.className="piece-table";
+    table.innerHTML = `<caption>${room.title}</caption>
+      <thead><tr><th class="elem-col">Élément</th>${ST.map(s=>`<th>${s.l}</th>`).join("")}<th class="comment-col">Commentaires</th><th></th></tr></thead><tbody></tbody>`;
+    const tbody = table.querySelector("tbody");
+    if(saved){
+      saved.items.forEach(row=> tbody.appendChild(buildRow(room.key, row.item, row.commentaire, asSortieRef ? row.etat : row.etat)));
+    } else {
+      room.items.forEach(it=> tbody.appendChild(buildRow(room.key, it.n, it.d||"")));
+    }
+    wrap.appendChild(table);
+    const addRow = document.createElement("div"); addRow.className="add-row";
+    addRow.innerHTML = `<input type="text" class="sans new-item" placeholder="Ajouter un élément…"><button class="add-btn">Ajouter</button>`;
+    addRow.querySelector(".add-btn").addEventListener("click", ()=>{
+      const inp = addRow.querySelector(".new-item");
+      if(!inp.value.trim()) return;
+      tbody.appendChild(buildRow(room.key, inp.value.trim(), ""));
+      inp.value="";
+    });
+    wrap.appendChild(addRow);
+    const invWrap = document.createElement("div"); invWrap.className="inventaire-wrap f";
+    invWrap.innerHTML = `<label>Inventaire / mobilier</label><textarea class="inventaire" rows="4">${(saved?saved.inventaire:room.inventaireDefaut)||""}</textarea><div class="inventaire-print"></div>`;
+    wrap.appendChild(invWrap);
+    el.appendChild(wrap);
+  });
+  syncSigNames();
+}
+
+const RANK = {tres_bon:0, bon:1, moyen:2, mauvais:3};
+
+function computeDiff(){
+  if(!entreeRef) return [];
+  const current = collectData();
+  const roomsMeta = BIENS[currentBien].rooms;
+  const diffs = [];
+  Object.keys(entreeRef.pieces_data||{}).forEach(roomKey=>{
+    const eRoom = entreeRef.pieces_data[roomKey];
+    const sRoom = current.pieces_data[roomKey];
+    if(!eRoom || !sRoom) return;
+    const roomTitle = (roomsMeta.find(r=>r.key===roomKey)||{}).title || roomKey;
+    const sMap = {}; sRoom.items.forEach(it=> sMap[it.item]=it);
+    eRoom.items.forEach(eIt=>{
+      const sIt = sMap[eIt.item];
+      if(!sIt) return;
+      const etatChanged = (eIt.etat||null) !== (sIt.etat||null);
+      const commentChanged = (eIt.commentaire||"").trim() !== (sIt.commentaire||"").trim();
+      if(etatChanged || commentChanged){
+        let kind = "note";
+        if(etatChanged && eIt.etat && sIt.etat){
+          kind = RANK[sIt.etat] > RANK[eIt.etat] ? "worse" : (RANK[sIt.etat] < RANK[eIt.etat] ? "better" : "note");
+        } else if(etatChanged){
+          kind = "note";
+        }
+        diffs.push({room:roomTitle, item:eIt.item, etatEntree:eIt.etat, etatSortie:sIt.etat,
+          commentEntree:eIt.commentaire, commentSortie:sIt.commentaire, etatChanged, commentChanged, kind});
+      }
+    });
+  });
+  return diffs;
+}
+
+function stateLabel(v){ return v ? (ST.find(s=>s.v===v)||{}).l || v : "—"; }
+
+function renderDiff(){
+  const sec = document.getElementById("sec-diff");
+  if(docType!=="sortie" || !entreeRef){ sec.style.display="none"; return; }
+  sec.style.display="";
+  const diffs = computeDiff();
+  const summary = document.getElementById("diff-summary");
+  const content = document.getElementById("diff-content");
+  if(diffs.length===0){
+    summary.textContent = "Aucun écart constaté par rapport à l'état d'entrée.";
+    content.innerHTML = `<div class="diff-empty">Tous les éléments correspondent à l'état d'entrée enregistré.</div>`;
+    return;
+  }
+  const nbWorse = diffs.filter(d=>d.kind==="worse").length;
+  summary.textContent = `${diffs.length} élément(s) présentent un écart par rapport à l'état d'entrée, dont ${nbWorse} dégradation(s) d'état.`;
+  const rows = diffs.map(d=>{
+    const badge = d.etatChanged ? `<span class="diff-badge ${d.kind}">${stateLabel(d.etatEntree)} → ${stateLabel(d.etatSortie)}</span>` : `<span class="diff-badge note">commentaire modifié</span>`;
+    return `<tr>
+      <td class="diff-room">${d.room}</td>
+      <td>${d.item}</td>
+      <td>${badge}</td>
+      <td>${d.commentSortie ? d.commentSortie.replace(/</g,"&lt;") : ""}</td>
+    </tr>`;
+  }).join("");
+  content.innerHTML = `<table class="diff-table">
+    <thead><tr><th>Pièce</th><th>Élément</th><th>Évolution</th><th>Commentaire (sortie)</th></tr></thead>
+    <tbody>${rows}</tbody></table>`;
+}
+document.getElementById("diff-refresh").addEventListener("click", ()=>{ renderDiff(); toast("Comparatif actualisé"); });
+
+function toast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"), 2200);
+}
+
+document.getElementById("btn-save").addEventListener("click", ()=>{
+  const data = collectData();
+  if(docType==="entree"){
+    localStorage.setItem("edl_entree_"+currentBien, JSON.stringify(data));
+  }
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const nom = (data.info.locataire||"locataire").replace(/[^a-zA-Z0-9]+/g,"_");
+  a.href = url; a.download = `etat_des_lieux_${data.type}_${nom}.json`;
+  a.click();
+  toast(docType==="entree" ? "Enregistré (servira pour l'état de sortie) + JSON exporté" : "JSON exporté");
+});
+
+document.getElementById("btn-print").addEventListener("click", ()=> window.print());
+
+document.getElementById("btn-mail").addEventListener("click", ()=>{
+  const data = collectData();
+  const typeLabel = docType==="entree" ? "d'entrée" : "de sortie";
+  const subject = `État des lieux ${typeLabel} — ${data.info.adresse||""}`;
+  const body = `Bonjour ${data.info.locataire||""},%0D%0A%0D%0AVeuillez trouver ci-joint l'état des lieux ${typeLabel} du logement situé ${data.info.adresse||""}.%0D%0A%0D%0A(Pense à joindre le PDF généré via "PDF / Imprimer" avant l'envoi.)%0D%0A%0D%0ABien cordialement,%0D%0A${data.info.bailleur||""}`;
+  const to = data.info.locataireEmail||"";
+  window.location.href = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${body}`;
+  toast("Brouillon email ouvert — joindre le PDF manuellement");
+});
+
+document.getElementById("btn-load").addEventListener("click", ()=> document.getElementById("file-input").click());
+document.getElementById("file-input").addEventListener("change", (e)=>{
+  const file = e.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    try{
+      const d = JSON.parse(reader.result);
+      if(docType==="sortie"){
+        if(d.type==="entree"){
+          // On est en mode Sortie : ce JSON sert de référence d'entrée pour le comparatif,
+          // même si le rechargement automatique (localStorage) n'était pas disponible.
+          entreeRef = d;
+          loadData(d, true);
+          renderDiff();
+          toast("État d'entrée chargé comme référence pour la sortie");
+        } else {
+          // Reprise d'un brouillon de sortie déjà en cours
+          loadData(d, false);
+          renderDiff();
+          toast("Données chargées");
+        }
+      } else {
+        // On est en mode Entrée : on reste en Entrée quel que soit le type du fichier chargé.
+        const cameFromSortie = d.type==="sortie";
+        loadData(d, false);
+        docType = "entree";
+        document.getElementById("type-entree").classList.add("active");
+        document.getElementById("type-sortie").classList.remove("active");
+        document.getElementById("type-label").textContent = "D'ENTRÉE";
+        entreeRef = null;
+        if(cameFromSortie){
+          // Nouveau locataire sur la base de l'état de sortie précédent :
+          // on efface ce qui est propre à l'ancien locataire (nom, email, date, relevés de compteurs),
+          // mais on garde l'état et les commentaires (mobilier, équipements) qui restent valables.
+          fVal("f-locataire","");
+          fVal("f-locataire-email","");
+          fVal("f-date","");
+          document.querySelectorAll("#compteurs-list [data-mf='date']").forEach(i=>i.value="");
+          document.querySelectorAll("#compteurs-list [data-mf='releve']").forEach(i=>i.value="");
+          document.querySelectorAll("#compteurs-list [data-mf='hp']").forEach(i=>i.value="");
+          document.querySelectorAll("#compteurs-list [data-mf='hc']").forEach(i=>i.value="");
+          toast("État de sortie précédent chargé comme base — vérifie nom, date et relevés de compteurs");
+        } else {
+          toast("Données chargées");
+        }
+      }
+    }
+    catch(err){ toast("Fichier invalide"); }
+  };
+  reader.readAsText(file);
+});
+
+loadTemplate();
+
+// --- Signature tactile ---
+function setupSignaturePad(canvas){
+  const ctx = canvas.getContext("2d");
+  function resize(){
+    const ratio = window.devicePixelRatio || 1;
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    canvas.width = w*ratio; canvas.height = h*ratio;
+    ctx.scale(ratio,ratio);
+    ctx.lineWidth = 2; ctx.lineCap="round"; ctx.strokeStyle = "#1E2A3A";
+  }
+  resize();
+  let drawing=false, last=null;
+  function pos(e){
+    const r = canvas.getBoundingClientRect();
+    return {x:e.clientX-r.left, y:e.clientY-r.top};
+  }
+  function start(e){
+    drawing=true; last=pos(e);
+    // setPointerCapture garde le tracé actif sur ce canvas même si le pointeur
+    // (souris/trackpad) sort momentanément du cadre pendant le glissé — c'est
+    // ce qui causait des traits manquants/interrompus sur Mac (trackpad/souris).
+    if(canvas.setPointerCapture && e.pointerId!==undefined){
+      try{ canvas.setPointerCapture(e.pointerId); }catch(err){}
+    }
+    e.preventDefault();
+  }
+  function move(e){
+    if(!drawing) return;
+    const p = pos(e);
+    ctx.beginPath(); ctx.moveTo(last.x,last.y); ctx.lineTo(p.x,p.y); ctx.stroke();
+    last=p; e.preventDefault();
+  }
+  function end(e){ drawing=false; }
+  // Pointer Events unifie souris, trackpad, doigt (tactile) et stylet en une
+  // seule API, gérée nativement par Safari (Mac et iPad) — plus fiable que de
+  // jongler entre mouse* et touch* séparément.
+  canvas.addEventListener("pointerdown", start);
+  canvas.addEventListener("pointermove", move);
+  canvas.addEventListener("pointerup", end);
+  canvas.addEventListener("pointercancel", end);
+  window.addEventListener("pointerup", end);
+  return {clear:()=>ctx.clearRect(0,0,canvas.width,canvas.height), canvas};
+}
+const sigB = setupSignaturePad(document.getElementById("sig-bailleur"));
+const sigL = setupSignaturePad(document.getElementById("sig-locataire"));
+document.querySelectorAll("[data-clear]").forEach(b=>{
+  b.addEventListener("click", ()=> (b.dataset.clear==="sig-bailleur"?sigB:sigL).clear());
+});
+</script>
+</body>
+</html>
